@@ -68,6 +68,9 @@
 
         self.tintColor = [UIColor whiteColor];
         self.selectedTintColor = [UIColor redColor];
+        
+        [self createGesture];
+
     }
 
     return self;
@@ -96,7 +99,6 @@
     [self.bottomContainerBar addSubview:self.closeButton];
     [self.bottomContainerBar addSubview:self.photoLibraryButton];
 
-    [self createGesture];
 }
 
 #pragma mark - Containers

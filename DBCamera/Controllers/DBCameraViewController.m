@@ -154,9 +154,9 @@ NSLocalizedStringFromTable(key, @"DBCamera", nil)
 {
     if ( !self.cameraView.photoLibraryButton.isHidden && [self.parentViewController.class isSubclassOfClass:NSClassFromString(@"DBCameraContainerViewController")] ) {
         if ( [ALAssetsLibrary authorizationStatus] !=  ALAuthorizationStatusDenied ) {
-            __weak DBCameraView *weakCamera = self.cameraView;
+            __weak DBCameraView *weakCamera = self.customCamera ?: self.cameraView;
             [[DBLibraryManager sharedInstance] loadLastItemWithBlock:^(BOOL success, UIImage *image) {
-                [weakCamera.photoLibraryButton setBackgroundImage:image forState:UIControlStateNormal];
+                [weakCamera.photoLibraryButton setImage:image forState:UIControlStateNormal];
             }];
         }
     } else
@@ -385,25 +385,6 @@ NSLocalizedStringFromTable(key, @"DBCamera", nil)
         return;
 
     _processingPhoto = YES;
-
-    if (NSFoundationVersionNumber >= NSFoundationVersionNumber_iOS_7_0) {
-        AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
-
-        if (status == AVAuthorizationStatusDenied || status == AVAuthorizationStatusRestricted) {
-            [[[UIAlertView alloc] initWithTitle:DBCameraLocalizedStrings(@"general.error.title")
-                                        message:DBCameraLocalizedStrings(@"cameraimage.nopolicy")
-                                       delegate:nil
-                              cancelButtonTitle:@"Ok"
-                              otherButtonTitles:nil, nil] show];
-
-            return;
-        }
-        else if (status == AVAuthorizationStatusNotDetermined) {
-            [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:nil];
-
-            return;
-        }
-    }
 
     [self.cameraManager captureImageForDeviceOrientation:_deviceOrientation];
 }

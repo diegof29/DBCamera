@@ -14,6 +14,7 @@
 #import "DBCameraLoadingView.h"
 #import "UIImage+TintColor.h"
 #import "GrayscaleContrastFilter.h"
+#import <PureLayout.h>
 
 #import <GPUImage/GPUImage.h>
 
@@ -105,9 +106,11 @@ static const CGSize kFilterCellSize = { 75, 90 };
     [self.view setUserInteractionEnabled:YES];
     [self.view setBackgroundColor:[UIColor blackColor]];
     
-    CGFloat cropX = ( CGRectGetWidth( self.frameView.frame) - 320 ) * .5;
-    _pFrame = (CGRect){ cropX, ( CGRectGetHeight( self.frameView.frame) - 360 ) * .5, 320, 320 };
-    _lFrame = (CGRect){ cropX, ( CGRectGetHeight( self.frameView.frame) - 240) * .5, 320, 240 };
+    CGSize screenSize = [UIScreen mainScreen].bounds.size;
+    
+    CGFloat cropX = ( CGRectGetWidth( self.frameView.frame) - screenSize.width ) * .5;
+    _pFrame = (CGRect){ cropX, ( CGRectGetHeight( self.frameView.frame) - 360 ) * .5, screenSize.width, screenSize.width / 1.2f};
+    _lFrame = (CGRect){ cropX, ( CGRectGetHeight( self.frameView.frame) - 240) * .5, screenSize.width, 240 };
     
     [self setCropRect:self.previewImage.size.width > self.previewImage.size.height ? _lFrame : _pFrame];
     
@@ -185,7 +188,7 @@ static const CGSize kFilterCellSize = { 75, 90 };
 - (void) cropImage
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        CGImageRef resultRef = [self newTransformedImage:self.imageView.transform
+        CGImageRef resultRef = [self newTransformedImage:self.validTransform
                                              sourceImage:self.sourceImage.CGImage
                                               sourceSize:self.sourceImage.size
                                        sourceOrientation:self.sourceImage.imageOrientation
@@ -243,6 +246,14 @@ static const CGSize kFilterCellSize = { 75, 90 };
         [_navigationBar setUserInteractionEnabled:YES];
         [_navigationBar addSubview:self.useButton];
         [_navigationBar addSubview:self.retakeButton];
+        
+        [self.useButton autoAlignAxisToSuperviewAxis:ALAxisHorizontal];
+        [self.useButton autoPinEdge:ALEdgeRight toEdge:ALEdgeRight ofView:self.useButton.superview withOffset:-24.0f];
+        
+        [self.retakeButton autoAlignAxisToSuperviewAxis:ALAxisHorizontal];
+        [self.retakeButton autoPinEdge:ALEdgeLeft toEdge:ALEdgeLeft ofView:self.useButton.superview withOffset:14.0f];
+        [self.retakeButton autoSetDimensionsToSize:CGSizeMake(33.0f, 41.0f)];
+        
         if ( !_forceQuadCrop )
             [_navigationBar addSubview:self.cropButton];
     }
@@ -273,11 +284,9 @@ static const CGSize kFilterCellSize = { 75, 90 };
 - (UIButton *) useButton
 {
     if ( !_useButton ) {
-        _useButton = [self baseButton];
-        [_useButton setTitle:[DBCameraLocalizedStrings(@"button.use") uppercaseString] forState:UIControlStateNormal];
-        [_useButton.titleLabel sizeToFit];
-        [_useButton sizeToFit];
-        [_useButton setFrame:(CGRect){ CGRectGetWidth(self.view.frame) - (CGRectGetWidth(_useButton.frame) + buttonMargin), 0, CGRectGetWidth(_useButton.frame) + buttonMargin, 60 }];
+        _useButton = [[UIButton alloc] initForAutoLayout];
+        [_useButton.titleLabel setFont:[UIFont fontWithName:@"OpenSans-Semibold" size:13]];
+        [_useButton setTitle:@"Done" forState:UIControlStateNormal];
         [_useButton addTarget:self action:@selector(saveImage) forControlEvents:UIControlEventTouchUpInside];
     }
     
@@ -287,11 +296,9 @@ static const CGSize kFilterCellSize = { 75, 90 };
 - (UIButton *) retakeButton
 {
     if ( !_retakeButton ) {
-        _retakeButton = [self baseButton];
-        [_retakeButton setTitle:[DBCameraLocalizedStrings(@"button.retake") uppercaseString] forState:UIControlStateNormal];
-        [_retakeButton.titleLabel sizeToFit];
-        [_retakeButton sizeToFit];
-        [_retakeButton setFrame:(CGRect){ 0, 0, CGRectGetWidth(_retakeButton.frame) + buttonMargin, 60 }];
+        _retakeButton = [[UIButton alloc] initForAutoLayout];
+        [_retakeButton setImage:[UIImage imageNamed:@"back_arrow_nav_bar"] forState:UIControlStateNormal];
+        [_retakeButton setContentEdgeInsets:UIEdgeInsetsMake(10.0f, 10.0f, 10.0f, 10.0f)];
         [_retakeButton addTarget:self action:@selector(retakeImage) forControlEvents:UIControlEventTouchUpInside];
     }
     
@@ -339,6 +346,8 @@ static const CGSize kFilterCellSize = { 75, 90 };
     DBCameraFilterCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kFilterCellIdentifier forIndexPath:indexPath];
     [cell.imageView setImage:[_filterMapping[@(indexPath.row)] imageByFilteringImage:self.previewImage]];
     [cell.label setText:[_filtersList[indexPath.row] uppercaseString]];
+    [cell.label setFont:[UIFont fontWithName:@"OpenSans-Bold" size:8]];
+    [cell.label setTextColor:(self.selectedFilterIndex.row == indexPath.row) ? [UIColor colorWithRed:244.0f/255.0f green:134.0f/255.0f blue:30.0f/255.0f alpha:1.0f] : [UIColor whiteColor]];
     [cell.imageView.layer setBorderWidth:(self.selectedFilterIndex.row == indexPath.row) ? 1.0 : 0.0];
     
     return cell;

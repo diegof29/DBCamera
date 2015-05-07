@@ -13,6 +13,9 @@
  *  DBCameraBaseCropViewController
  */
 @interface DBCameraBaseCropViewController : UIViewController
+
+@property (nonatomic, assign) CGAffineTransform validTransform;
+
 /**
  *  The source image view
  */
@@ -78,4 +81,7 @@
 - (CGImageRef) newTransformedImage:(CGAffineTransform)transform sourceImage:(CGImageRef)sourceImage sourceSize:(CGSize)sourceSize
                  sourceOrientation:(UIImageOrientation)sourceOrientation outputWidth:(CGFloat)outputWidth
                           cropRect:(CGRect)cropRect imageViewSize:(CGSize)imageViewSize;
+
+- (UIImage *)cropedImage;
+
 @end
